@@ -1,17 +1,8 @@
-import os
-
-# Define primero la variable de entorno de Octave (omite esta línea en Mac si Octave ya está en PATH)
-# os.environ['OCTAVE_EXECUTABLE'] = '/usr/local/bin/octave'  # Solo si es necesario
-
 from flask import Flask, render_template, request, jsonify
-from oct2py import Oct2Py
 import numpy as np
-import matplotlib.pyplot as plt
+from bisection import bisection
+from newton import newton
 
-# Inicializar Oct2Py
-oc = Oct2Py()
-
-# Crear instancia Flask
 app = Flask(__name__)
 
 @app.route('/')
@@ -25,25 +16,31 @@ def calculate():
         if not data:
             return jsonify({'error': 'No se recibió ningún JSON válido'}), 400
 
-        # Extraer parámetros del cuerpo JSON
-        P1, f, L, D, Q, g = [float(data[k]) for k in ('P1','f','L','D','Q','g')]
+        P1 = float(data['P1'])
+        f = float(data['f'])
+        L = float(data['L'])
+        D = float(data['D'])
+        Q = float(data['Q'])
+        g = float(data['g'])
         method = data['method']
 
-        # Agregar ruta de scripts .m
-        oc.addpath(os.path.join(app.root_path, 'octave'))
-
-        # Ejecutar método numérico
         if method == 'bisection':
-            root, it, err = oc.bisection(P1, f, L, D, Q, g, nout=3)
+            root, it, err = bisection(P1, f, L, D, Q, g)
+        elif method == 'newton':
+            root, it, err = newton(P1, f, L, D, Q, g)
+        elif method == 'compare':
+            b_root, b_it, b_err = bisection(P1, f, L, D, Q, g)
+            n_root, n_it, n_err = newton(P1, f, L, D, Q, g)
+            return jsonify({
+                'bisection': {'root': b_root, 'iterations': b_it, 'error': b_err},
+                'newton': {'root': n_root, 'iterations': n_it, 'error': n_err}
+            })
         else:
-            root, it, err = oc.newton(P1, f, L, D, Q, g, nout=3)
+            return jsonify({'error': 'Método inválido'}), 400
 
-        # Convertir a tipos de Python
-        root, it, err = float(root), int(it), float(err)
-
-        # Generar datos para graficar la función f(P)
-        P_vals = np.linspace(0, P1*2, 200).tolist()
-        f_vals = [P1 - P - (f*L/(2*g*D))*(Q**2/(np.pi**2*D**4)) for P in P_vals]
+        # f(P) para graficar
+        P_vals = np.linspace(0, P1 * 2, 200).tolist()
+        f_vals = [P1 - P - (f * L / (2 * g * D)) * (Q**2 / (np.pi**2 * D**4)) for P in P_vals]
 
         return jsonify({
             'root': round(root, 6),
@@ -58,4 +55,3 @@ def calculate():
 
 if __name__ == '__main__':
     app.run(debug=True)
-    

@@ -5,6 +5,7 @@ __pycache__/
 *.pyo
 *.pyd
 .env
+octave/
 octave-workspace
 
 # Archivos del sistema (Mac/Linux/Windows)

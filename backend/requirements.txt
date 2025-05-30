@@ -1,4 +1,2 @@
 Flask
-oct2py
 numpy
-matplotlib
