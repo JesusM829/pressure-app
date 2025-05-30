@@ -1,0 +1,12 @@
+# Ignora el entorno virtual
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.env
+octave-workspace
+
+# Archivos del sistema (Mac/Linux/Windows)
+.DS_Store
+Thumbs.db
